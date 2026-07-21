@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>Kelola Kost</title>
+<style>
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);min-height:100vh;}
+  body{padding:20px;}
+  :root{
+    --ink:#232520; --ink-soft:#5b5d54; --ink-faint:#9a998e;
+    --paper:#F6F3EA; --paper-raised:#FFFFFF; --paper-sunken:#EDE9DB;
+    --line:#DDD8C6; --line-strong:#C7C1AA;
+    --brass:#8A6A2F; --brass-fill:#C9A24C; --brass-bg:#F3E9CE; --brass-text:#5E480F;
+    --teal:#2F6357; --teal-fill:#3E8574; --teal-bg:#E1EEE9; --teal-text:#1E4238;
+    --rust:#A8462B; --rust-bg:#F5E1DA; --rust-text:#7A2F1B;
+    --radius:10px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ink:#EDEAE0; --ink-soft:#B8B5A8; --ink-faint:#7C7A6E;
+      --paper:#1C1B17; --paper-raised:#26251F; --paper-sunken:#151511;
+      --line:#3A382E; --line-strong:#4C4938;
+      --brass:#D8B865; --brass-fill:#C9A24C; --brass-bg:#3A2F14; --brass-text:#E8CE8A;
+      --teal:#7FBFAC; --teal-fill:#3E8574; --teal-bg:#173028; --teal-text:#9FD8C4;
+      --rust:#E08A6E; --rust-bg:#3A1E15; --rust-text:#F0AC94;
+    }
+  }
+  *{box-sizing:border-box;}
+  .kk-app{font-family:'Anthropic Sans',system-ui,sans-serif;color:var(--ink);background:transparent;padding:0.25rem 0;}
+  .kk-app h1,.kk-app h2,.kk-app h3{font-weight:500;margin:0;}
+  .kk-header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:1.25rem;flex-wrap:wrap;}
+  .kk-brand{display:flex;align-items:center;gap:10px;}
+  .kk-brand-mark{width:34px;height:34px;border-radius:8px;background:var(--brass-bg);display:flex;align-items:center;justify-content:center;color:var(--brass-text);font-size:18px;flex-shrink:0;}
+  .kk-title{font-size:20px;font-weight:500;}
+  .kk-sub{font-size:13px;color:var(--ink-faint);margin-top:2px;}
+  .kk-tabs{display:flex;gap:4px;border-bottom:0.5px solid var(--line);margin-bottom:1.25rem;overflow-x:auto;}
+  .kk-tab{padding:8px 14px;font-size:13.5px;color:var(--ink-soft);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;border-radius:0;}
+  .kk-tab.active{color:var(--ink);border-bottom-color:var(--brass-fill);font-weight:500;}
+  .kk-tab:hover{color:var(--ink);}
+  .kk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1.5rem;}
+  .kk-metric{background:var(--paper-raised);border:0.5px solid var(--line);border-radius:12px;padding:14px 16px;}
+  .kk-metric-label{font-size:12.5px;color:var(--ink-faint);margin-bottom:6px;}
+  .kk-metric-val{font-size:22px;font-weight:500;}
+  .kk-metric-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .kk-panel{background:var(--paper-raised);border:0.5px solid var(--line);border-radius:12px;padding:1rem 1.1rem;margin-bottom:1rem;}
+  .kk-panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap;}
+  .kk-panel-head h3{font-size:15px;}
+  .kk-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .kk-btn{border:0.5px solid var(--line-strong);background:var(--paper-raised);color:var(--ink);border-radius:8px;padding:7px 13px;font-size:13px;cursor:pointer;}
+  .kk-btn:hover{background:var(--paper-sunken);}
+  .kk-btn.primary{background:var(--brass-fill);border-color:var(--brass-fill);color:#2A2205;}
+  .kk-btn.primary:hover{opacity:0.9;}
+  .kk-btn.danger{color:var(--rust-text);border-color:var(--rust);}
+  .kk-btn.small{padding:4px 9px;font-size:12px;}
+  input,select{height:34px;border:0.5px solid var(--line-strong);background:var(--paper-raised);color:var(--ink);border-radius:8px;padding:0 10px;font-size:13.5px;font-family:inherit;}
+  input:focus,select:focus{outline:none;box-shadow:0 0 0 2px var(--brass-bg);border-color:var(--brass);}
+  label{font-size:12px;color:var(--ink-soft);display:block;margin-bottom:4px;}
+  .kk-field{display:flex;flex-direction:column;min-width:130px;flex:1;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-size:11.5px;color:var(--ink-faint);font-weight:500;padding:6px 8px;border-bottom:0.5px solid var(--line);text-transform:uppercase;letter-spacing:0.02em;}
+  td{padding:9px 8px;border-bottom:0.5px solid var(--line);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .kk-pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:500;}
+  .kk-pill.ok{background:var(--teal-bg);color:var(--teal-text);}
+  .kk-pill.warn{background:var(--rust-bg);color:var(--rust-text);}
+  .kk-pill.partial{background:var(--brass-bg);color:var(--brass-text);}
+  .kk-pill.empty{background:var(--paper-sunken);color:var(--ink-faint);}
+  .kk-empty{text-align:center;padding:2.5rem 1rem;color:var(--ink-faint);}
+  .kk-empty i{font-size:26px;margin-bottom:8px;display:block;}
+  .kk-modal-bg{min-height:320px;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;padding:20px;border-radius:12px;}
+  .kk-modal{background:var(--paper-raised);border-radius:12px;padding:1.25rem;width:100%;max-width:420px;max-height:80vh;overflow-y:auto;}
+  .kk-modal h3{margin-bottom:12px;font-size:15px;}
+  .kk-modal .kk-field{margin-bottom:10px;width:100%;}
+  .kk-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}
+  .kk-search{width:100%;max-width:220px;}
+  .kk-badge-type{font-size:11px;padding:2px 7px;border-radius:6px;background:var(--paper-sunken);color:var(--ink-soft);}
+  .kk-muted{color:var(--ink-faint);font-size:12px;}
+  .kk-loading{padding:2rem;text-align:center;color:var(--ink-faint);font-size:13px;}
+  .kk-two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media (max-width:520px){.kk-two-col{grid-template-columns:1fr;}}
+  .kk-mini-list{display:flex;flex-direction:column;gap:0;}
+  .kk-mini-row{display:flex;align-items:center;justify-content:space-between;padding:8px 2px;border-bottom:0.5px solid var(--line);font-size:13px;}
+  .kk-mini-row:last-child{border-bottom:none;}
+  .kk-mini-add{display:flex;gap:6px;margin-top:10px;}
+  .kk-lock{max-width:280px;margin:2.5rem auto;text-align:center;}
+  .kk-lock i{font-size:26px;color:var(--brass-text);margin-bottom:10px;display:block;}
+  .kk-lock input{width:100%;text-align:center;letter-spacing:6px;font-size:18px;margin-bottom:10px;}
+  .kk-lock-err{color:var(--rust-text);font-size:12.5px;margin-bottom:8px;min-height:16px;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+</style>
+</head>
+<body>
+
+<div class="kk-app" id="kk-root">
+  <h2 class="sr-only">Aplikasi manajemen kost dan kontrakan multi cabang: dashboard, kamar, penyewa, tagihan sesuai tanggal masuk, laporan, data master, dan sampah</h2>
+  <div class="kk-loading" id="kk-loading">Memuat data…</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css"></script>
+<script>
+(function(){
+  const root = document.getElementById('kk-root');
+  const fmtRp = n => 'Rp' + Math.round(n||0).toLocaleString('id-ID');
+  const uid = () => Math.random().toString(36).slice(2,9);
+  const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const now = new Date();
+
+  let state = { branches: [], types: [], rooms: [], tenants: [], payments: [] };
+  let tab = 'dashboard';
+  let modal = null;
+  let roomFilter = { branch:'all', type:'all' };
+  let searchQ = '';
+  let billFilter = 'all';
+
+  function seedDefaults(){
+    if(state.types.length===0){
+      state.types = [{id:uid(), name:'Kos'}, {id:uid(), name:'Kontrakan'}];
+    }
+    if(state.branches.length===0){
+      state.branches = [{id:uid(), name:'Cabang utama'}];
+    }
+  }
+
+  const APP_PIN = '102030';
+  let unlocked = false;
+
+  function renderLock(err){
+    document.getElementById('kk-loading')?.remove();
+    root.innerHTML = `
+      <div class="kk-lock">
+        <i class="ti ti-lock" aria-hidden="true"></i>
+        <h3 style="margin-bottom:6px;">Masukkan PIN</h3>
+        <div class="kk-sub" style="margin-bottom:14px;">PIN diperlukan untuk membuka data kost.</div>
+        <input id="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="......"/>
+        <div class="kk-lock-err">${err||''}</div>
+        <button class="kk-btn primary" id="pin-submit" style="width:100%;">Buka</button>
+      </div>
+    `;
+    const inp = document.getElementById('pin-input');
+    inp.focus();
+    const submit = ()=>{
+      if(inp.value===APP_PIN){ unlocked=true; loadData(); }
+      else renderLock('PIN salah, coba lagi.');
+    };
+    document.getElementById('pin-submit').onclick = submit;
+    inp.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); });
+  }
+
+  async function loadData(){
+    if(!unlocked){ renderLock(); return; }
+    try{
+      const r = await window.storage.get('kost-data', true);
+      if(r && r.value){ state = JSON.parse(r.value); }
+    }catch(e){ /* belum ada data */ }
+    seedDefaults();
+    render();
+  }
+  let saveTimer=null;
+  async function saveData(){
+    try{ await window.storage.set('kost-data', JSON.stringify(state), true); }
+    catch(e){ console.error('gagal simpan', e); }
+  }
+  function persist(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveData, 150); }
+
+  function activeRooms(){ return state.rooms.filter(r=>!r.deletedAt); }
+  function activeTenants(){ return state.tenants.filter(t=>!t.deletedAt); }
+  function branchName(id){ const b=state.branches.find(b=>b.id===id); return b?b.name:'-'; }
+  function typeName(id){ const t=state.types.find(t=>t.id===id); return t?t.name:'-'; }
+  function tenantName(id){ const t=state.tenants.find(t=>t.id===id); return t?t.name:'(dihapus)'; }
+  function roomLabel(id){ const r=state.rooms.find(r=>r.id===id); return r?r.name:'(dihapus)'; }
+
+  // --- Siklus tagihan mengikuti tanggal masuk penyewa, bukan tanggal kalender ---
+  function currentPeriod(checkin){
+    if(!checkin) return null;
+    const day = new Date(checkin+'T00:00:00').getDate();
+    let start = new Date(now.getFullYear(), now.getMonth(), Math.min(day,28));
+    if(day<=28 && start.getDate()!==day) start.setDate(day);
+    if(start > now) start.setMonth(start.getMonth()-1);
+    let end = new Date(start.getFullYear(), start.getMonth()+1, start.getDate()-1);
+    return { startKey: start.toISOString().slice(0,10), endKey: end.toISOString().slice(0,10) };
+  }
+  function periodLabel(startKey, endKey){
+    const s = new Date(startKey+'T00:00:00'), e = new Date(endKey+'T00:00:00');
+    return `${s.getDate()} ${MONTHS[s.getMonth()]} - ${e.getDate()} ${MONTHS[e.getMonth()]} ${e.getFullYear()}`;
+  }
+
+  function ensureBills(){
+    let changed=false;
+    activeTenants().forEach(t=>{
+      const room = state.rooms.find(r=>r.id===t.roomId);
+      if(!room || !t.checkin) return;
+      const p = currentPeriod(t.checkin);
+      if(!p) return;
+      const exists = state.payments.find(pay=>pay.tenantId===t.id && pay.periodStart===p.startKey);
+      if(!exists){
+        state.payments.push({id:uid(), tenantId:t.id, roomId:room.id, periodStart:p.startKey, periodEnd:p.endKey, amount:room.price, paidAmount:0, status:'belum', paidDate:null});
+        changed=true;
+      }
+    });
+    if(changed) persist();
+  }
+  function remaining(p){ return Math.max(0, Number(p.amount||0) - Number(p.paidAmount||0)); }
+  function recalcStatus(p){
+    const paid = Number(p.paidAmount||0);
+    if(paid<=0){ p.status='belum'; }
+    else if(paid < Number(p.amount||0)){ p.status='sebagian'; }
+    else { p.status='lunas'; p.paidDate = p.paidDate || new Date().toISOString().slice(0,10); }
+    if(p.status==='belum') p.paidDate=null;
+  }
+  function statusPill(p){
+    if(p.status==='lunas') return '<span class="kk-pill ok">Lunas</span>';
+    if(p.status==='sebagian') return `<span class="kk-pill partial">Sebagian (${fmtRp(p.paidAmount)})</span>`;
+    return '<span class="kk-pill warn">Belum bayar</span>';
+  }
+
+  function metrics(){
+    const rooms = activeRooms();
+    const totalRooms = rooms.length;
+    const occupied = rooms.filter(r=>r.status==='occupied').length;
+    const empty = totalRooms - occupied;
+    const currentKeys = new Set(activeTenants().map(t=>{ const p=currentPeriod(t.checkin); return t.id+'|'+(p?p.startKey:''); }));
+    const currentBills = state.payments.filter(p=>currentKeys.has(p.tenantId+'|'+p.periodStart));
+    const income = currentBills.reduce((s,p)=>s+Number(p.paidAmount||0),0);
+    const outstanding = currentBills.reduce((s,p)=>s+remaining(p),0);
+    return {totalRooms, occupied, empty, income, outstanding, unpaidCount: currentBills.filter(p=>p.status!=='lunas').length, currentBills};
+  }
+
+  function render(){
+    document.getElementById('kk-loading')?.remove();
+    root.innerHTML = `
+      <div class="kk-header">
+        <div class="kk-brand">
+          <div class="kk-brand-mark"><i class="ti ti-key" aria-hidden="true"></i></div>
+          <div>
+            <div class="kk-title">Kelola kost</div>
+            <div class="kk-sub">${activeRooms().length} unit &middot; ${state.branches.length} cabang &middot; ${activeTenants().length} penyewa &middot; <i class="ti ti-users" aria-hidden="true"></i> data bersama</div>
+          </div>
+        </div>
+      </div>
+      <div class="kk-tabs" role="tablist">
+        ${tabBtn('dashboard','Dashboard')}
+        ${tabBtn('rooms','Kamar')}
+        ${tabBtn('tenants','Penyewa')}
+        ${tabBtn('billing','Tagihan')}
+        ${tabBtn('report','Laporan')}
+        ${tabBtn('master','Master')}
+        ${tabBtn('trash','Sampah')}
+      </div>
+      <div id="kk-content"></div>
+    `;
+    const content = document.getElementById('kk-content');
+    if(tab==='dashboard'){ ensureBills(); content.innerHTML = renderDashboard(); }
+    if(tab==='rooms') content.innerHTML = renderRooms();
+    if(tab==='tenants') content.innerHTML = renderTenants();
+    if(tab==='billing'){ ensureBills(); content.innerHTML = renderBilling(); }
+    if(tab==='report') content.innerHTML = renderReport();
+    if(tab==='master') content.innerHTML = renderMaster();
+    if(tab==='trash') content.innerHTML = renderTrash();
+    if(modal) renderModal();
+    bindEvents();
+  }
+
+  function tabBtn(id,label){
+    return `<button class="kk-tab ${tab===id?'active':''}" data-tab="${id}">${label}</button>`;
+  }
+
+  function renderDashboard(){
+    const m = metrics();
+    const unpaid = m.currentBills.filter(p=>p.status!=='lunas').slice(0,6);
+    return `
+      <div class="kk-grid">
+        <div class="kk-metric"><div class="kk-metric-label">Total kamar</div><div class="kk-metric-val">${m.totalRooms}</div></div>
+        <div class="kk-metric"><div class="kk-metric-label">Terisi</div><div class="kk-metric-val">${m.occupied}</div><div class="kk-metric-sub">${m.totalRooms?Math.round(m.occupied/m.totalRooms*100):0}% okupansi</div></div>
+        <div class="kk-metric"><div class="kk-metric-label">Kosong</div><div class="kk-metric-val">${m.empty}</div></div>
+        <div class="kk-metric"><div class="kk-metric-label">Pemasukan periode berjalan</div><div class="kk-metric-val">${fmtRp(m.income)}</div></div>
+        <div class="kk-metric"><div class="kk-metric-label">Belum bayar</div><div class="kk-metric-val" style="color:var(--rust-text)">${fmtRp(m.outstanding)}</div><div class="kk-metric-sub">${m.unpaidCount} tagihan</div></div>
+      </div>
+      <div class="kk-panel">
+        <div class="kk-panel-head"><h3>Belum bayar (periode berjalan)</h3><button class="kk-btn small" data-goto="billing">Lihat semua</button></div>
+        ${unpaid.length ? `
+          <table><thead><tr><th>Penyewa</th><th>Kamar</th><th>Jatuh tempo</th><th>Sisa tagihan</th><th></th></tr></thead><tbody>
+          ${unpaid.map(p=>`<tr>
+            <td>${tenantName(p.tenantId)}</td>
+            <td>${roomLabel(p.roomId)}</td>
+            <td>${new Date(p.periodEnd+'T00:00:00').getDate()} ${MONTHS[new Date(p.periodEnd+'T00:00:00').getMonth()]}</td>
+            <td>${fmtRp(remaining(p))}</td>
+            <td><a href="#" data-wa="${p.id}" class="kk-btn small"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> Ingatkan</a></td>
+          </tr>`).join('')}
+          </tbody></table>
+        ` : `<div class="kk-empty"><i class="ti ti-check" aria-hidden="true"></i>Semua tagihan periode ini sudah lunas.</div>`}
+      </div>
+    `;
+  }
+
+  function renderRooms(){
+    let rooms = activeRooms();
+    if(roomFilter.branch!=='all') rooms = rooms.filter(r=>r.branchId===roomFilter.branch);
+    if(roomFilter.type!=='all') rooms = rooms.filter(r=>r.typeId===roomFilter.type);
+    if(searchQ) rooms = rooms.filter(r=>r.name.toLowerCase().includes(searchQ.toLowerCase()));
+    const noMaster = state.branches.length===0 || state.types.length===0;
+    return `
+      <div class="kk-panel">
+        <div class="kk-panel-head">
+          <div class="kk-row">
+            <select id="room-filter-branch">
+              <option value="all">Semua cabang</option>
+              ${state.branches.map(b=>`<option value="${b.id}" ${roomFilter.branch===b.id?'selected':''}>${b.name}</option>`).join('')}
+            </select>
+            <select id="room-filter-type">
+              <option value="all">Semua tipe</option>
+              ${state.types.map(t=>`<option value="${t.id}" ${roomFilter.type===t.id?'selected':''}>${t.name}</option>`).join('')}
+            </select>
+            <input class="kk-search" id="room-search" placeholder="Cari nama kamar" value="${searchQ}"/>
+          </div>
+          <button class="kk-btn primary" data-open-modal="room-add" ${noMaster?'disabled':''}><i class="ti ti-plus" aria-hidden="true"></i> Tambah kamar</button>
+        </div>
+        ${noMaster ? `<div class="kk-empty"><i class="ti ti-alert-triangle" aria-hidden="true"></i>Tambahkan cabang dan tipe kamar dulu di tab Master.</div>` : (rooms.length ? `
+        <table><thead><tr><th>Nama</th><th>Cabang</th><th>Tipe</th><th>Harga/bln</th><th>Status</th><th></th></tr></thead><tbody>
+        ${rooms.map(r=>`<tr>
+          <td>${r.name}</td>
+          <td>${branchName(r.branchId)}</td>
+          <td><span class="kk-badge-type">${typeName(r.typeId)}</span></td>
+          <td>${fmtRp(r.price)}</td>
+          <td>${r.status==='occupied'?'<span class="kk-pill ok">Terisi</span>':'<span class="kk-pill empty">Kosong</span>'}</td>
+          <td class="kk-row">
+            <button class="kk-btn small" data-edit-room="${r.id}"><i class="ti ti-edit" aria-hidden="true"></i></button>
+            <button class="kk-btn small danger" data-del-room="${r.id}"><i class="ti ti-trash" aria-hidden="true"></i></button>
+          </td>
+        </tr>`).join('')}
+        </tbody></table>` : `<div class="kk-empty"><i class="ti ti-door" aria-hidden="true"></i>Belum ada kamar. Tambahkan kamar pertama.</div>`)}
+      </div>
+    `;
+  }
+
+  function renderTenants(){
+    let tenants = activeTenants();
+    if(searchQ) tenants = tenants.filter(t=>t.name.toLowerCase().includes(searchQ.toLowerCase()));
+    return `
+      <div class="kk-panel">
+        <div class="kk-panel-head">
+          <input class="kk-search" id="tenant-search" placeholder="Cari nama penyewa" value="${searchQ}"/>
+          <button class="kk-btn primary" data-open-modal="tenant-add"><i class="ti ti-plus" aria-hidden="true"></i> Tambah penyewa</button>
+        </div>
+        ${tenants.length ? `
+        <table><thead><tr><th>Nama</th><th>Kamar</th><th>No. HP</th><th>Tanggal masuk</th><th>Jatuh tempo</th><th></th></tr></thead><tbody>
+        ${tenants.map(t=>{
+          const p = currentPeriod(t.checkin);
+          return `<tr>
+          <td>${t.name}</td>
+          <td>${roomLabel(t.roomId)}</td>
+          <td>${t.phone||'-'}</td>
+          <td>${t.checkin||'-'}</td>
+          <td>${t.checkin?('tgl '+new Date(t.checkin+'T00:00:00').getDate()+' tiap bulan'):'-'}</td>
+          <td class="kk-row">
+            <button class="kk-btn small" data-edit-tenant="${t.id}"><i class="ti ti-edit" aria-hidden="true"></i></button>
+            <button class="kk-btn small danger" data-del-tenant="${t.id}"><i class="ti ti-trash" aria-hidden="true"></i></button>
+          </td>
+        </tr>`;}).join('')}
+        </tbody></table>` : `<div class="kk-empty"><i class="ti ti-users" aria-hidden="true"></i>Belum ada penyewa.</div>`}
+      </div>
+    `;
+  }
+
+  function renderBilling(){
+    let bills = [...state.payments].sort((a,b)=>b.periodStart.localeCompare(a.periodStart));
+    if(billFilter!=='all') bills = bills.filter(p=>p.status===billFilter);
+    return `
+      <div class="kk-panel">
+        <div class="kk-panel-head">
+          <select id="bill-filter">
+            <option value="all" ${billFilter==='all'?'selected':''}>Semua status</option>
+            <option value="belum" ${billFilter==='belum'?'selected':''}>Belum bayar</option>
+            <option value="lunas" ${billFilter==='lunas'?'selected':''}>Lunas</option>
+          </select>
+          <div class="kk-muted">Tagihan dibuat otomatis sesuai tanggal masuk tiap penyewa</div>
+        </div>
+        ${bills.length ? `
+        <table><thead><tr><th>Penyewa</th><th>Kamar</th><th>Periode</th><th>Tagihan</th><th>Sisa</th><th>Status</th><th></th></tr></thead><tbody>
+        ${bills.map(p=>`<tr>
+          <td>${tenantName(p.tenantId)}</td>
+          <td>${roomLabel(p.roomId)}</td>
+          <td>${periodLabel(p.periodStart,p.periodEnd)}</td>
+          <td>${fmtRp(p.amount)}</td>
+          <td>${p.status==='lunas'?'-':fmtRp(remaining(p))}</td>
+          <td>${statusPill(p)}</td>
+          <td class="kk-row">
+            ${p.status!=='lunas' ? `<button class="kk-btn small primary" data-open-pay="${p.id}">Catat bayar</button>
+            <a href="#" data-wa="${p.id}" class="kk-btn small"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></a>`
+            : `<button class="kk-btn small" data-unpay="${p.id}">Batalkan</button>`}
+          </td>
+        </tr>`).join('')}
+        </tbody></table>` : `<div class="kk-empty"><i class="ti ti-receipt" aria-hidden="true"></i>Belum ada tagihan. Tambahkan penyewa dengan tanggal masuk di kamar terlebih dulu.</div>`}
+      </div>
+    `;
+  }
+
+  function renderReport(){
+    const byMonth = {};
+    state.payments.forEach(p=>{
+      const mk = p.periodStart.slice(0,7);
+      byMonth[mk] = byMonth[mk] || {income:0, outstanding:0};
+      if(p.status==='lunas') byMonth[mk].income += Number(p.amount||0);
+      else byMonth[mk].outstanding += Number(p.amount||0);
+    });
+    const monthsSorted = Object.keys(byMonth).sort().reverse();
+    return `
+      <div class="kk-panel">
+        <div class="kk-panel-head"><h3>Ringkasan per bulan mulai periode</h3><button class="kk-btn small" id="export-csv"><i class="ti ti-download" aria-hidden="true"></i> Export CSV</button></div>
+        ${monthsSorted.length ? `
+        <table><thead><tr><th>Bulan</th><th>Pemasukan</th><th>Tunggakan</th></tr></thead><tbody>
+        ${monthsSorted.map(mk=>{const [y,m]=mk.split('-'); return `<tr><td>${MONTHS[Number(m)-1]} ${y}</td><td>${fmtRp(byMonth[mk].income)}</td><td style="color:var(--rust-text)">${fmtRp(byMonth[mk].outstanding)}</td></tr>`;}).join('')}
+        </tbody></table>` : `<div class="kk-empty"><i class="ti ti-chart-bar" aria-hidden="true"></i>Belum ada data tagihan.</div>`}
+      </div>
+    `;
+  }
+
+  function renderMaster(){
+    return `
+      <div class="kk-two-col">
+        <div class="kk-panel">
+          <h3 style="margin-bottom:10px;">Tipe kamar</h3>
+          <div class="kk-mini-list">
+            ${state.types.map(t=>`<div class="kk-mini-row"><span>${t.name}</span><button class="kk-btn small danger" data-del-type="${t.id}"><i class="ti ti-trash" aria-hidden="true"></i></button></div>`).join('') || '<div class="kk-muted">Belum ada tipe.</div>'}
+          </div>
+          <div class="kk-mini-add">
+            <input id="new-type" placeholder="Nama tipe, contoh: Ruko"/>
+            <button class="kk-btn primary small" id="add-type">Tambah</button>
+          </div>
+        </div>
+        <div class="kk-panel">
+          <h3 style="margin-bottom:10px;">Cabang</h3>
+          <div class="kk-mini-list">
+            ${state.branches.map(b=>`<div class="kk-mini-row"><span>${b.name}</span><button class="kk-btn small danger" data-del-branch="${b.id}"><i class="ti ti-trash" aria-hidden="true"></i></button></div>`).join('') || '<div class="kk-muted">Belum ada cabang.</div>'}
+          </div>
+          <div class="kk-mini-add">
+            <input id="new-branch" placeholder="Nama cabang, contoh: Cabang Kebon Jeruk"/>
+            <button class="kk-btn primary small" id="add-branch">Tambah</button>
+          </div>
+        </div>
+      </div>
+      <div class="kk-muted" style="padding:0 4px;">Menghapus tipe atau cabang yang masih dipakai kamar akan membuat kamar itu tampil tanpa tipe/cabang.</div>
+    `;
+  }
+
+  function renderTrash(){
+    const rooms = state.rooms.filter(r=>r.deletedAt);
+    const tenants = state.tenants.filter(t=>t.deletedAt);
+    return `
+      <div class="kk-panel">
+        <div class="kk-panel-head"><h3>Kamar dihapus</h3></div>
+        ${rooms.length ? `
+        <table><thead><tr><th>Nama</th><th>Cabang</th><th>Tipe</th><th></th></tr></thead><tbody>
+        ${rooms.map(r=>`<tr>
+          <td>${r.name}</td><td>${branchName(r.branchId)}</td><td>${typeName(r.typeId)}</td>
+          <td class="kk-row">
+            <button class="kk-btn small" data-restore-room="${r.id}"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Pulihkan</button>
+            <button class="kk-btn small danger" data-purge-room="${r.id}"><i class="ti ti-trash-x" aria-hidden="true"></i> Hapus permanen</button>
+          </td>
+        </tr>`).join('')}
+        </tbody></table>` : `<div class="kk-empty"><i class="ti ti-trash" aria-hidden="true"></i>Sampah kamar kosong.</div>`}
+      </div>
+      <div class="kk-panel">
+        <div class="kk-panel-head"><h3>Penyewa dihapus</h3></div>
+        ${tenants.length ? `
+        <table><thead><tr><th>Nama</th><th>Kamar</th><th></th></tr></thead><tbody>
+        ${tenants.map(t=>`<tr>
+          <td>${t.name}</td><td>${roomLabel(t.roomId)}</td>
+          <td class="kk-row">
+            <button class="kk-btn small" data-restore-tenant="${t.id}"><i class="ti ti-arrow-back-up" aria-hidden="true"></i> Pulihkan</button>
+            <button class="kk-btn small danger" data-purge-tenant="${t.id}"><i class="ti ti-trash-x" aria-hidden="true"></i> Hapus permanen</button>
+          </td>
+        </tr>`).join('')}
+        </tbody></table>` : `<div class="kk-empty"><i class="ti ti-trash" aria-hidden="true"></i>Sampah penyewa kosong.</div>`}
+      </div>
+    `;
+  }
+
+  function renderModal(){
+    let body = '';
+    if(modal.type==='room-add' || modal.type==='room-edit'){
+      const r = modal.data || {name:'', branchId:state.branches[0]?.id||'', typeId:state.types[0]?.id||'', price:'', status:'empty'};
+      body = `
+        <h3>${modal.type==='room-add'?'Tambah kamar':'Edit kamar'}</h3>
+        <div class="kk-field"><label>Nama kamar</label><input id="m-name" value="${r.name}" placeholder="Contoh: Kamar A1"/></div>
+        <div class="kk-field"><label>Cabang</label><select id="m-branch">${state.branches.map(b=>`<option value="${b.id}" ${b.id===r.branchId?'selected':''}>${b.name}</option>`).join('')}</select></div>
+        <div class="kk-field"><label>Tipe</label><select id="m-type">${state.types.map(t=>`<option value="${t.id}" ${t.id===r.typeId?'selected':''}>${t.name}</option>`).join('')}</select></div>
+        <div class="kk-field"><label>Harga per bulan (Rp)</label><input id="m-price" type="number" value="${r.price}" placeholder="800000"/></div>
+        <div class="kk-modal-actions">
+          <button class="kk-btn" data-close-modal>Batal</button>
+          <button class="kk-btn primary" data-save-room="${modal.data?modal.data.id:''}">Simpan</button>
+        </div>`;
+    }
+    if(modal.type==='tenant-add' || modal.type==='tenant-edit'){
+      const t = modal.data || {name:'', phone:'', roomId:'', checkin:''};
+      const availableRooms = activeRooms().filter(r=>r.status==='empty' || r.id===t.roomId);
+      body = `
+        <h3>${modal.type==='tenant-add'?'Tambah penyewa':'Edit penyewa'}</h3>
+        <div class="kk-field"><label>Nama penyewa</label><input id="m-tname" value="${t.name}" placeholder="Nama lengkap"/></div>
+        <div class="kk-field"><label>No. WhatsApp</label><input id="m-phone" value="${t.phone}" placeholder="08xxxxxxxxxx"/></div>
+        <div class="kk-field"><label>Kamar</label><select id="m-room">
+          <option value="">Pilih kamar kosong</option>
+          ${availableRooms.map(r=>`<option value="${r.id}" ${r.id===t.roomId?'selected':''}>${r.name} - ${branchName(r.branchId)} (${fmtRp(r.price)})</option>`).join('')}
+        </select></div>
+        <div class="kk-field"><label>Tanggal masuk (menentukan jatuh tempo bulanan)</label><input id="m-checkin" type="date" value="${t.checkin||''}"/></div>
+        <div class="kk-modal-actions">
+          <button class="kk-btn" data-close-modal>Batal</button>
+          <button class="kk-btn primary" data-save-tenant="${modal.data?modal.data.id:''}">Simpan</button>
+        </div>`;
+    }
+    if(modal.type==='record-payment'){
+      const p = modal.data;
+      const sisa = remaining(p);
+      body = `
+        <h3>Catat pembayaran</h3>
+        <div class="kk-muted" style="margin-bottom:10px;">${tenantName(p.tenantId)} &middot; ${roomLabel(p.roomId)} &middot; ${periodLabel(p.periodStart,p.periodEnd)}</div>
+        <div class="kk-muted" style="margin-bottom:10px;">Total tagihan ${fmtRp(p.amount)}${p.paidAmount>0?` &middot; sudah dibayar ${fmtRp(p.paidAmount)}`:''} &middot; sisa ${fmtRp(sisa)}</div>
+        <div class="kk-field"><label>Jumlah dibayar sekarang (Rp)</label><input id="m-payamount" type="number" value="${sisa}" min="0" max="${sisa}"/></div>
+        <div class="kk-modal-actions">
+          <button class="kk-btn" data-close-modal>Batal</button>
+          <button class="kk-btn primary" data-confirm-pay="${p.id}">Simpan</button>
+        </div>`;
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'kk-modal-bg';
+    wrap.innerHTML = `<div class="kk-modal">${body}</div>`;
+    root.appendChild(wrap);
+  }
+
+  function bindEvents(){
+    root.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab; searchQ=''; render();});
+    root.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>{tab=b.dataset.goto; render();});
+
+    const rfb = document.getElementById('room-filter-branch'); if(rfb) rfb.onchange=e=>{roomFilter.branch=e.target.value; render();};
+    const rft = document.getElementById('room-filter-type'); if(rft) rft.onchange=e=>{roomFilter.type=e.target.value; render();};
+    const rs = document.getElementById('room-search'); if(rs) rs.oninput=e=>{searchQ=e.target.value; render();};
+    const ts = document.getElementById('tenant-search'); if(ts) ts.oninput=e=>{searchQ=e.target.value; render();};
+    const bf = document.getElementById('bill-filter'); if(bf) bf.onchange=e=>{billFilter=e.target.value; render();};
+
+    root.querySelectorAll('[data-open-modal]').forEach(b=>b.onclick=()=>{ if(b.disabled) return; modal={type:b.dataset.openModal, data:null}; render();});
+    root.querySelectorAll('[data-close-modal]').forEach(b=>b.onclick=()=>{modal=null; render();});
+    root.querySelectorAll('[data-edit-room]').forEach(b=>b.onclick=()=>{modal={type:'room-edit', data:state.rooms.find(r=>r.id===b.dataset.editRoom)}; render();});
+    root.querySelectorAll('[data-edit-tenant]').forEach(b=>b.onclick=()=>{modal={type:'tenant-edit', data:state.tenants.find(t=>t.id===b.dataset.editTenant)}; render();});
+
+    root.querySelectorAll('[data-del-room]').forEach(b=>b.onclick=()=>{
+      const r = state.rooms.find(r=>r.id===b.dataset.delRoom);
+      r.deletedAt = new Date().toISOString();
+      persist(); render();
+    });
+    root.querySelectorAll('[data-del-tenant]').forEach(b=>b.onclick=()=>{
+      const t = state.tenants.find(t=>t.id===b.dataset.delTenant);
+      const room = state.rooms.find(r=>r.id===t.roomId); if(room) room.status='empty';
+      t.deletedAt = new Date().toISOString();
+      persist(); render();
+    });
+    root.querySelectorAll('[data-restore-room]').forEach(b=>b.onclick=()=>{
+      const r = state.rooms.find(r=>r.id===b.dataset.restoreRoom); r.deletedAt=null;
+      persist(); render();
+    });
+    root.querySelectorAll('[data-purge-room]').forEach(b=>b.onclick=()=>{
+      state.rooms = state.rooms.filter(r=>r.id!==b.dataset.purgeRoom);
+      persist(); render();
+    });
+    root.querySelectorAll('[data-restore-tenant]').forEach(b=>b.onclick=()=>{
+      const t = state.tenants.find(t=>t.id===b.dataset.restoreTenant); t.deletedAt=null;
+      const room = state.rooms.find(r=>r.id===t.roomId); if(room) room.status='occupied';
+      persist(); render();
+    });
+    root.querySelectorAll('[data-purge-tenant]').forEach(b=>b.onclick=()=>{
+      state.tenants = state.tenants.filter(t=>t.id!==b.dataset.purgeTenant);
+      persist(); render();
+    });
+
+    root.querySelectorAll('[data-save-room]').forEach(b=>b.onclick=()=>{
+      const name = document.getElementById('m-name').value.trim();
+      const branchId = document.getElementById('m-branch').value;
+      const typeId = document.getElementById('m-type').value;
+      const price = Number(document.getElementById('m-price').value)||0;
+      if(!name) return;
+      const id = b.dataset.saveRoom;
+      if(id){
+        const r = state.rooms.find(r=>r.id===id);
+        r.name=name; r.branchId=branchId; r.typeId=typeId; r.price=price;
+      } else {
+        state.rooms.push({id:uid(), name, branchId, typeId, price, status:'empty', deletedAt:null});
+      }
+      persist(); modal=null; render();
+    });
+
+    root.querySelectorAll('[data-save-tenant]').forEach(b=>b.onclick=()=>{
+      const name = document.getElementById('m-tname').value.trim();
+      const phone = document.getElementById('m-phone').value.trim();
+      const roomId = document.getElementById('m-room').value;
+      const checkin = document.getElementById('m-checkin').value;
+      if(!name) return;
+      const id = b.dataset.saveTenant;
+      if(id){
+        const t = state.tenants.find(t=>t.id===id);
+        const oldRoom = state.rooms.find(r=>r.id===t.roomId);
+        if(oldRoom && oldRoom.id!==roomId) oldRoom.status='empty';
+        t.name=name; t.phone=phone; t.roomId=roomId; t.checkin=checkin;
+      } else {
+        state.tenants.push({id:uid(), name, phone, roomId, checkin, deletedAt:null});
+      }
+      const newRoom = state.rooms.find(r=>r.id===roomId);
+      if(newRoom) newRoom.status='occupied';
+      persist(); modal=null; render();
+    });
+
+    root.querySelectorAll('[data-open-pay]').forEach(b=>b.onclick=()=>{
+      modal={type:'record-payment', data: state.payments.find(p=>p.id===b.dataset.openPay)};
+      render();
+    });
+    root.querySelectorAll('[data-confirm-pay]').forEach(b=>b.onclick=()=>{
+      const p = state.payments.find(p=>p.id===b.dataset.confirmPay);
+      const sisa = remaining(p);
+      let amt = Number(document.getElementById('m-payamount').value)||0;
+      if(amt<0) amt=0;
+      if(amt>sisa) amt=sisa;
+      p.paidAmount = Number(p.paidAmount||0) + amt;
+      recalcStatus(p);
+      persist(); modal=null; render();
+    });
+    root.querySelectorAll('[data-unpay]').forEach(b=>b.onclick=()=>{
+      const p = state.payments.find(p=>p.id===b.dataset.unpay);
+      p.paidAmount = 0; p.status='belum'; p.paidDate=null;
+      persist(); render();
+    });
+    root.querySelectorAll('[data-wa]').forEach(b=>b.onclick=(e)=>{
+      e.preventDefault();
+      const p = state.payments.find(p=>p.id===b.dataset.wa);
+      const t = state.tenants.find(t=>t.id===p.tenantId);
+      const room = state.rooms.find(r=>r.id===p.roomId);
+      const sisaMsg = p.paidAmount>0 ? `Anda sudah membayar ${fmtRp(p.paidAmount)}, sisa tagihan ${fmtRp(remaining(p))}` : `sebesar ${fmtRp(p.amount)}`;
+      const msg = encodeURIComponent(`Halo ${t?t.name:''}, ini pengingat tagihan sewa ${room?room.name:''} periode ${periodLabel(p.periodStart,p.periodEnd)}. ${sisaMsg}. Mohon segera dibayarkan, terima kasih.`);
+      const phone = (t?.phone||'').replace(/\D/g,'').replace(/^0/,'62');
+      window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+    });
+
+    const addType = document.getElementById('add-type');
+    if(addType) addType.onclick=()=>{
+      const v = document.getElementById('new-type').value.trim();
+      if(!v) return;
+      state.types.push({id:uid(), name:v});
+      persist(); render();
+    };
+    const addBranch = document.getElementById('add-branch');
+    if(addBranch) addBranch.onclick=()=>{
+      const v = document.getElementById('new-branch').value.trim();
+      if(!v) return;
+      state.branches.push({id:uid(), name:v});
+      persist(); render();
+    };
+    root.querySelectorAll('[data-del-type]').forEach(b=>b.onclick=()=>{
+      state.types = state.types.filter(t=>t.id!==b.dataset.delType);
+      persist(); render();
+    });
+    root.querySelectorAll('[data-del-branch]').forEach(b=>b.onclick=()=>{
+      state.branches = state.branches.filter(br=>br.id!==b.dataset.delBranch);
+      persist(); render();
+    });
+
+    const exportBtn = document.getElementById('export-csv');
+    if(exportBtn) exportBtn.onclick=()=>{
+      let csv = 'Periode,Penyewa,Kamar,Cabang,Tagihan,Dibayar,Sisa,Status\\n';
+      state.payments.forEach(p=>{
+        const room = state.rooms.find(r=>r.id===p.roomId);
+        csv += `${periodLabel(p.periodStart,p.periodEnd)},${tenantName(p.tenantId)},${roomLabel(p.roomId)},${room?branchName(room.branchId):''},${p.amount},${p.paidAmount||0},${remaining(p)},${p.status}\\n`;
+      });
+      const blob = new Blob([csv], {type:'text/csv'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'laporan-kost.csv';
+      a.click();
+    };
+  }
+
+  loadData();
+})();
+</script>
+</body>
+</html>
