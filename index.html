@@ -152,15 +152,15 @@
   async function loadData(){
     if(!unlocked){ renderLock(); return; }
     try{
-      const r = await window.storage.get('kost-data', true);
-      if(r && r.value){ state = JSON.parse(r.value); }
+      const raw = localStorage.getItem('kost-data');
+      if(raw){ state = JSON.parse(raw); }
     }catch(e){ /* belum ada data */ }
     seedDefaults();
     render();
   }
   let saveTimer=null;
   async function saveData(){
-    try{ await window.storage.set('kost-data', JSON.stringify(state), true); }
+    try{ localStorage.setItem('kost-data', JSON.stringify(state)); }
     catch(e){ console.error('gagal simpan', e); }
   }
   function persist(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveData, 150); }
