@@ -100,7 +100,22 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css"></script>
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDyvpynhhDq5qivMTmklhBnbgq81qdOLY4",
+  authDomain: "kelola-kost-419cb.firebaseapp.com",
+  projectId: "kelola-kost-419cb",
+  storageBucket: "kelola-kost-419cb.firebasestorage.app",
+  messagingSenderId: "1056511226986",
+  appId: "1:1056511226986:web:8a0bcabcf45c34a0094613"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+const dataDocRef = doc(db, 'kost', 'data');
+
 (function(){
   const root = document.getElementById('kk-root');
   const fmtRp = n => 'Rp' + Math.round(n||0).toLocaleString('id-ID');
@@ -149,18 +164,35 @@
     inp.addEventListener('keydown', e=>{ if(e.key==='Enter') submit(); });
   }
 
+  let unsubscribeSync = null;
+  let firstSnapshot = true;
+  let applyingRemote = false;
+
   async function loadData(){
     if(!unlocked){ renderLock(); return; }
-    try{
-      const raw = localStorage.getItem('kost-data');
-      if(raw){ state = JSON.parse(raw); }
-    }catch(e){ /* belum ada data */ }
-    seedDefaults();
-    render();
+    if(unsubscribeSync) unsubscribeSync();
+    unsubscribeSync = onSnapshot(dataDocRef, (snap)=>{
+      try{
+        if(snap.exists()){
+          const data = snap.data();
+          if(data && typeof data.json === 'string'){
+            applyingRemote = true;
+            state = JSON.parse(data.json);
+          }
+        }
+      }catch(e){ console.error('gagal baca data', e); }
+      if(firstSnapshot){ seedDefaults(); firstSnapshot = false; }
+      render();
+      applyingRemote = false;
+    }, (err)=>{
+      console.error('sinkronisasi gagal', err);
+      if(firstSnapshot){ seedDefaults(); firstSnapshot = false; render(); }
+    });
   }
   let saveTimer=null;
   async function saveData(){
-    try{ localStorage.setItem('kost-data', JSON.stringify(state)); }
+    if(applyingRemote) return; // avoid re-saving data we just received
+    try{ await setDoc(dataDocRef, { json: JSON.stringify(state) }); }
     catch(e){ console.error('gagal simpan', e); }
   }
   function persist(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveData, 150); }
