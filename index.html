@@ -422,6 +422,7 @@ const dataDocRef = doc(db, 'kost', 'data');
             ${p.status!=='lunas' ? `<button class="kk-btn small primary" data-open-pay="${p.id}">Catat bayar</button>
             <a href="#" data-wa="${p.id}" class="kk-btn small"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i></a>`
             : `<button class="kk-btn small" data-unpay="${p.id}">Batalkan</button>`}
+            <button class="kk-btn small danger" data-del-bill="${p.id}" title="Hapus tagihan"><i class="ti ti-trash" aria-hidden="true"></i></button>
           </td>
         </tr>`).join('')}
         </tbody></table>` : `<div class="kk-empty"><i class="ti ti-receipt" aria-hidden="true"></i>Belum ada tagihan. Tambahkan penyewa dengan tanggal masuk di kamar terlebih dulu.</div>`}
@@ -658,6 +659,15 @@ const dataDocRef = doc(db, 'kost', 'data');
     root.querySelectorAll('[data-unpay]').forEach(b=>b.onclick=()=>{
       const p = state.payments.find(p=>p.id===b.dataset.unpay);
       p.paidAmount = 0; p.status='belum'; p.paidDate=null;
+      persist(); render();
+    });
+    root.querySelectorAll('[data-del-bill]').forEach(b=>b.onclick=()=>{
+      const p = state.payments.find(p=>p.id===b.dataset.delBill);
+      if(!p) return;
+      const t = state.tenants.find(t=>t.id===p.tenantId);
+      const ok = confirm(`Hapus tagihan ${t?t.name:''} periode ${periodLabel(p.periodStart,p.periodEnd)}? Tindakan ini tidak bisa dibatalkan.`);
+      if(!ok) return;
+      state.payments = state.payments.filter(x=>x.id!==p.id);
       persist(); render();
     });
     root.querySelectorAll('[data-wa]').forEach(b=>b.onclick=(e)=>{
